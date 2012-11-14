@@ -58,16 +58,53 @@ class OmekaSeoPlugin
 	    foreach($tabs as $key => $html) {
 	        if ($key == 'Miscellaneous') {
 				//enter the form right here
-	            $ht .= 	'<p>Enter the Title attribute information
-	            in this box here.</p>
-				<p>Note if you do nothing it will look like this: example</p>
-				<div id="seoform"><textarea rows="3" cols="75" id="seoValue"  name="seoValue"/>'. $ourform->title. '</textarea>';
-				$ht.= '<h3>Other Potential Examples:</h3><p>example 2</p><p>example 3</p>';
+	            $ht .= 	'<h4>Instructions</h4>
+	            <p>Enter the information you would like to see
+	            on your Item\'s title tag in the box below.</p>
+				<p>If you do nothing it will look like this:<br />';
+				if($ourform->title)
+					{$ht .= $ourform->title;} 
+				else {$ht .= settings('site_title');
+				$ht.= "|"; $ht.= item('Dublin Core', 'Title');}
+			 	$ht .='</p><h4>Type in Your title tag</h4><div id="seoform"><textarea rows="3" cols="75" id="seoValue"  name="seoValue"/>'. $ourform->title. '</textarea>';
+		     	$string	=	$ourform->generateSuggestions($id);
+	          	$lengthstatus = $ourform->isittooLong($ourform->title);
+				$ht .= '<br /><h4>Suggested SEO Title</h4><p>'. $string .'</p>';
+				
+				if($lengthstatus)
+					{$ht .= "<div class='error'>$lengthstatus</div>";}
+
+				
 	          	$ttabs['SEO'] =  $ht;
 	        }
+			
 	        $ttabs[$key] = $html;
 	    }
     return $ttabs;
+	}
+	
+	private function isittooLong($string) {
+		$length	=	strlen($string);
+		if($length> 70)
+			{
+				return "The current SEO Title tag that
+				Search Engines are seeing is longer than 70 characters.
+				As Google only indexes the first 70, you might
+				want to look into shortening it.";
+				
+			}
+		else {
+				return NULL;
+		}
+	}
+	
+	private function generateSuggestions($id) {
+		//take the id and let's find some suggestions. 
+		$title = item('Dublin Core', 'Title');
+		$item  = item('Item Type Name');
+		$site  = settings('site_title');
+		
+		return "$item | $title | $site";
 	}
 	
 	public function seoSave($item)
@@ -89,8 +126,12 @@ class OmekaSeoPlugin
 	public function findTitle($title)
 	{
 		$id	=	$this->lookupId();
-		echo $title;
-		echo $id;
+		$seotitle	=	$this->getSeoTitle($id);
+		if($seotitle)
+			{ echo $seotitle; }
+		else
+			{echo $title;}
+		//echo $id;
 	}
 
 	private static function lookupId()
